@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Chess in Antique Room</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Garamond', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            padding: 20px;
+            perspective: 1500px;
+        }
+
+        .scene {
+            width: 100%;
+            max-width: 100%;
+            aspect-ratio: 16 / 9;
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1500px;
+            transform: rotateX(-35deg) rotateY(25deg);
+        }
+
+        .room {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: translateZ(-2000px);
+        }
+
+        /* Room Walls */
+        .wall {
+            position: absolute;
+            background-size: 200px 200px;
+            background-image:
+                repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(0,0,0,0.1) 100px, rgba(0,0,0,0.1) 200px),
+                repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(0,0,0,0.1) 100px, rgba(0,0,0,0.1) 200px),
+                linear-gradient(135deg, #8B6F47 0%, #7A6339 50%, #6A5329 100%);
+            transform-style: preserve-3d;
+        }
+
+        .wall-back {
+            width: 3000px;
+            height: 2000px;
+            left: -1500px;
+            top: 0;
+            transform: translateZ(-1500px);
+            background: linear-gradient(135deg, #6B5D4F 0%, #5A4A3A 50%, #4A3A2A 100%);
+        }
+
+        .wall-left {
+            width: 1500px;
+            height: 2000px;
+            left: -1500px;
+            top: 0;
+            transform: rotateY(90deg) translateZ(-1500px);
+            background: linear-gradient(90deg, #4A3A2A 0%, #6B5D4F 100%);
+        }
+
+        .wall-right {
+            width: 1500px;
+            height: 2000px;
+            right: -1500px;
+            top: 0;
+            transform: rotateY(90deg) translateZ(1500px);
+            background: linear-gradient(90deg, #6B5D4F 0%, #4A3A2A 100%);
+        }
+
+        .floor {
+            position: absolute;
+            width: 3000px;
+            height: 1500px;
+            left: -1500px;
+            top: 2000px;
+            background: linear-gradient(135deg, #8B7355 0%, #6B5D4F 50%, #4A3A2A 100%);
+            transform: rotateX(90deg);
+            background-image:
+                repeating-linear-gradient(90deg, transparent, transparent 150px, rgba(0,0,0,0.15) 150px, rgba(0,0,0,0.15) 300px),
+                repeating-linear-gradient(0deg, transparent, transparent 150px, rgba(0,0,0,0.15) 150px, rgba(0,0,0,0.15) 300px),
+                linear-gradient(135deg, #8B7355 0%, #6B5D4F 50%, #4A3A2A 100%);
+        }
+
+        .ceiling {
+            position: absolute;
+            width: 3000px;
+            height: 1500px;
+            left: -1500px;
+            top: 0;
+            background: linear-gradient(135deg, #5A4A3A 0%, #4A3A2A 50%, #3A2A1A 100%);
+            transform: rotateX(90deg) translateZ(-2000px);
+        }
+
+        /* Table */
+        .table {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) translateZ(0);
+            transform-style: preserve-3d;
+        }
+
+        .table-top {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            background: linear-gradient(135deg, #5A4A3A 0%, #4A3A2A 50%, #3A2A1A 100%);
+            border: 20px solid #3a2a1a;
+            box-shadow:
+                inset 0 5px 20px rgba(0, 0, 0, 0.8),
+                inset 0 -5px 20px rgba(255, 255, 255, 0.1),
+                0 20px 60px rgba(0, 0, 0, 0.9);
+            transform-style: preserve-3d;
+            transform: rotateX(75deg) rotateZ(20deg) translateY(-100px);
+        }
+
+        .table-bottom {
+            position: absolute;
+            width: 800px;
+            height: 50px;
+            bottom: -50px;
+            left: 0;
+            background: linear-gradient(90deg, #3a2a1a 0%, #2a1a0a 100%);
+            transform: rotateX(90deg);
+            transform-origin: bottom center;
+        }
+
+        .table-leg {
+            position: absolute;
+            width: 30px;
+            height: 200px;
+            background: linear-gradient(90deg, #4a3a2a 0%, #2a1a0a 100%);
+            transform-style: preserve-3d;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .table-leg-1 {
+            left: 30px;
+            top: -200px;
+            transform: rotateX(90deg) translateZ(-25px);
+            transform-origin: top center;
+        }
+
+        .table-leg-2 {
+            right: 30px;
+            top: -200px;
+            transform: rotateX(90deg) translateZ(-25px);
+            transform-origin: top center;
+        }
+
+        /* Chessboard with 3D tiles */
+        .chess-board {
+            position: absolute;
+            width: 640px;
+            height: 640px;
+            left: 50%;
+            top: 50%;
+            margin-left: -320px;
+            margin-top: -320px;
+            transform-style: preserve-3d;
+            perspective: 1200px;
+        }
+
+        .tile {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .tile-face-top {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+            transition: all 0.15s;
+            transform: translateZ(15px);
+            z-index: 5;
+        }
+
+        .tile-face-front {
+            position: absolute;
+            width: 100%;
+            height: 15px;
+            bottom: 0;
+            transform: rotateX(90deg);
+            transform-origin: bottom center;
+            z-index: 3;
+        }
+
+        .tile-face-right {
+            position: absolute;
+            width: 15px;
+            height: 100%;
+            right: 0;
+            transform: rotateY(90deg);
+            transform-origin: right center;
+            z-index: 3;
+        }
+
+        .tile-face-back {
+            position: absolute;
+            width: 100%;
+            height: 15px;
+            top: 0;
+            transform: rotateX(-90deg);
+            transform-origin: top center;
+            z-index: 3;
+        }
+
+        .tile-face-left {
+            position: absolute;
+            width: 15px;
+            height: 100%;
+            left: 0;
+            transform: rotateY(-90deg);
+            transform-origin: left center;
+            z-index: 3;
+        }
+
+        .tile.light .tile-face-top {
+            background: linear-gradient(135deg, #f5d9aa 0%, #e8c896 50%, #ddbf84 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .tile.light .tile-face-front,
+        .tile.light .tile-face-right,
+        .tile.light .tile-face-back,
+        .tile.light .tile-face-left {
+            background: linear-gradient(90deg, #e8c896 0%, #d4b376 100%);
+        }
+
+        .tile.dark .tile-face-top {
+            background: linear-gradient(135deg, #9d8b6f 0%, #8b7a5e 50%, #7a6a4d 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .tile.dark .tile-face-front,
+        .tile.dark .tile-face-right,
+        .tile.dark .tile-face-back,
+        .tile.dark .tile-face-left {
+            background: linear-gradient(90deg, #7a6a4d 0%, #6a5a3d 100%);
+        }
+
+        .tile.selected .tile-face-top {
+            box-shadow: inset 0 0 0 3px #d4a856 !important;
+        }
+
+        .tile.valid-move .tile-face-top {
+            box-shadow: inset 0 0 0 2px #90ee90 !important;
+        }
+
+        .tile.attacking .tile-face-top {
+            box-shadow: inset 0 0 15px rgba(200, 50, 50, 0.6) !important;
+        }
+
+        /* UI */
+        .ui {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(60, 50, 40, 0.9);
+            padding: 15px 20px;
+            border: 2px solid #8b7355;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .info {
+            color: #d4af8f;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .info-label {
+            color: #a8956a;
+            font-size: 11px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: 2px solid #5a4a2a;
+            background: linear-gradient(180deg, #8b7355 0%, #6d5e43 100%);
+            color: #f5e6d3;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Garamond', serif;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: linear-gradient(180deg, #9d8b6f 0%, #7a6a4d 100%);
+        }
+
+        input[type="range"] {
+            width: 100px;
+            cursor: pointer;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="scene" id="scene">
+        <div class="room">
+            <div class="wall wall-back"></div>
+            <div class="wall wall-left"></div>
+            <div class="wall wall-right"></div>
+            <div class="floor"></div>
+            <div class="ceiling"></div>
+        </div>
+
+        <div class="table">
+            <div class="table-top">
+                <div class="chess-board" id="board"></div>
+                <div class="table-leg table-leg-1"></div>
+                <div class="table-leg table-leg-2"></div>
+            </div>
+            <div class="table-bottom"></div>
+        </div>
+    </div>
+
+    <div class="ui">
+        <div class="control-group">
+            <div class="info">
+                <div class="info-label">Turn</div>
+                <div id="turnDisplay" style="color: #d4af8f;">White</div>
+            </div>
+            <div class="info">
+                <div class="info-label">Moves</div>
+                <div id="moveCount" style="color: #d4af8f;">0</div>
+            </div>
+            <div class="info">
+                <div class="info-label">Status</div>
+                <div id="status" style="color: #d4af8f;">Game started</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="difficulty" style="color: #d4af8f; font-size: 12px; font-weight: bold;">Difficulty:</label>
+            <input type="range" id="difficulty" min="1" max="10" value="5">
+            <span id="diffDisplay" style="color: #d4af8f; font-weight: bold; min-width: 25px; font-size: 12px;">5</span>
+            <button id="newGameBtn">New Game</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+    </div>
+
+    <script>
+
+        class Chess {
+            constructor() {
+                this.board = [];
+                this.turn = 'white';
+                this.moveCount = 0;
+                this.reset();
+            }
+
+            reset() {
+                this.board = [
+                    ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+                    ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                    ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+                ];
+                this.turn = 'white';
+                this.moveCount = 0;
+            }
+
+            get(r, c) {
+                if (r < 0 || r > 7 || c < 0 || c > 7) return null;
+                return this.board[r][c] === 0 ? null : this.board[r][c];
+            }
+
+            isWhite(p) {
+                return p && p === p.toUpperCase();
+            }
+
+            getValidMoves(r, c) {
+                const p = this.get(r, c);
+                if (!p) return [];
+
+                const moves = [];
+                const type = p.toLowerCase();
+                const isWhite = this.isWhite(p);
+
+                const add = (nr, nc) => {
+                    if (nr >= 0 && nr <= 7 && nc >= 0 && nc <= 7) {
+                        const t = this.get(nr, nc);
+                        if (!t || this.isWhite(t) !== isWhite) moves.push([r, c, nr, nc]);
+                    }
+                };
+
+                const line = (dr, dc) => {
+                    for (let i = 1; i < 8; i++) {
+                        const nr = r + dr * i, nc = c + dc * i;
+                        if (nr < 0 || nr > 7 || nc < 0 || nc > 7) break;
+                        const t = this.get(nr, nc);
+                        if (!t) moves.push([r, c, nr, nc]);
+                        else {
+                            if (this.isWhite(t) !== isWhite) moves.push([r, c, nr, nc]);
+                            break;
+                        }
+                    }
+                };
+
+                if (type === 'p') {
+                    const d = isWhite ? -1 : 1;
+                    const nr = r + d;
+                    if (!this.get(nr, c)) moves.push([r, c, nr, c]);
+                    for (let dc of [-1, 1]) {
+                        const t = this.get(nr, c + dc);
+                        if (t && this.isWhite(t) !== isWhite) moves.push([r, c, nr, c + dc]);
+                    }
+                } else if (type === 'n') {
+                    for (let [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) {
+                        add(r + dr, c + dc);
+                    }
+                } else if (type === 'b') {
+                    for (let dr of [-1, 1]) for (let dc of [-1, 1]) line(dr, dc);
+                } else if (type === 'r') {
+                    line(-1, 0); line(1, 0); line(0, -1); line(0, 1);
+                } else if (type === 'q') {
+                    for (let dr of [-1, 0, 1]) for (let dc of [-1, 0, 1]) if (dr || dc) line(dr, dc);
+                } else if (type === 'k') {
+                    for (let dr of [-1, 0, 1]) for (let dc of [-1, 0, 1]) if (dr || dc) add(r + dr, c + dc);
+                }
+
+                return moves;
+            }
+
+            move(fr, fc, tr, tc) {
+                const p = this.get(fr, fc);
+                this.board[tr][tc] = p;
+                this.board[fr][fc] = 0;
+                if (p.toLowerCase() === 'p' && (tr === 0 || tr === 7)) {
+                    this.board[tr][tc] = this.isWhite(p) ? 'Q' : 'q';
+                }
+                this.turn = this.turn === 'white' ? 'black' : 'white';
+                this.moveCount++;
+            }
+
+            getAllMoves(isWhite) {
+                const moves = [];
+                for (let r = 0; r < 8; r++)
+                    for (let c = 0; c < 8; c++) {
+                        const p = this.get(r, c);
+                        if (p && this.isWhite(p) === isWhite)
+                            moves.push(...this.getValidMoves(r, c));
+                    }
+                return moves;
+            }
+        }
+
+        const pieces = { 'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
+                         'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔' };
+
+        let game = new Chess();
+        let selectedSquare = null;
+        let validMoves = [];
+        let gameOver = false;
+        let difficulty = 5;
+        let isThinking = false;
+
+        function toSquare(r, c) {
+            return String.fromCharCode(97 + c) + (8 - r);
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const tile = document.createElement('div');
+                    tile.className = `tile ${(r + c) % 2 ? 'dark' : 'light'}`;
+                    tile.id = toSquare(r, c);
+                    tile.style.transform = `translate3d(${c * 80}px, ${r * 80}px, 0)`;
+
+                    const top = document.createElement('div');
+                    top.className = 'tile-face-top';
+
+                    const p = game.get(r, c);
+                    if (p) {
+                        top.textContent = pieces[p];
+                    }
+
+                    const front = document.createElement('div');
+                    front.className = 'tile-face-front';
+
+                    const right = document.createElement('div');
+                    right.className = 'tile-face-right';
+
+                    const back = document.createElement('div');
+                    back.className = 'tile-face-back';
+
+                    const left = document.createElement('div');
+                    left.className = 'tile-face-left';
+
+                    tile.appendChild(top);
+                    tile.appendChild(front);
+                    tile.appendChild(right);
+                    tile.appendChild(back);
+                    tile.appendChild(left);
+
+                    tile.onclick = e => {
+                        e.stopPropagation();
+                        handleClick(r, c, tile);
+                    };
+
+                    boardEl.appendChild(tile);
+                }
+            }
+        }
+
+        function handleClick(r, c, tile) {
+            if (gameOver || isThinking || game.turn !== 'white') return;
+
+            if (selectedSquare?.id === tile.id) {
+                clearSelected();
+                return;
+            }
+
+            const m = validMoves.find(x => x[2] === r && x[3] === c);
+            if (m) {
+                game.move(m[0], m[1], m[2], m[3]);
+                renderBoard();
+                document.getElementById('moveCount').textContent = game.moveCount;
+                document.getElementById('turnDisplay').textContent = game.turn === 'white' ? 'White' : 'Black';
+                document.getElementById('status').textContent = 'Computer thinking...';
+                clearSelected();
+                isThinking = true;
+                setTimeout(computerMove, 600);
+                return;
+            }
+
+            const piece = game.get(r, c);
+            if (piece && game.isWhite(piece)) {
+                clearSelected();
+                selectedSquare = tile;
+                tile.classList.add('selected');
+                validMoves = game.getValidMoves(r, c);
+                validMoves.forEach(v => {
+                    const target = document.getElementById(toSquare(v[2], v[3]));
+                    target.classList.add(game.get(v[2], v[3]) ? 'attacking' : 'valid-move');
+                });
+            }
+        }
+
+        function clearSelected() {
+            if (selectedSquare) selectedSquare.classList.remove('selected');
+            validMoves.forEach(v => {
+                const target = document.getElementById(toSquare(v[2], v[3]));
+                target.classList.remove('valid-move', 'attacking');
+            });
+            selectedSquare = null;
+            validMoves = [];
+        }
+
+        function computerMove() {
+            const allMoves = game.getAllMoves(false);
+            if (!allMoves.length) {
+                gameOver = true;
+                document.getElementById('status').textContent = 'You win!';
+                isThinking = false;
+                return;
+            }
+
+            const m = allMoves[Math.floor(Math.random() * Math.min(allMoves.length, Math.max(1, 11 - difficulty)))];
+            game.move(m[0], m[1], m[2], m[3]);
+            renderBoard();
+            document.getElementById('moveCount').textContent = game.moveCount;
+            document.getElementById('turnDisplay').textContent = game.turn === 'white' ? 'White' : 'Black';
+            document.getElementById('status').textContent = 'Your turn';
+            isThinking = false;
+
+            const wMoves = game.getAllMoves(true);
+            if (!wMoves.length) {
+                gameOver = true;
+                document.getElementById('status').textContent = 'You lost!';
+            }
+        }
+
+        document.getElementById('newGameBtn').addEventListener('click', () => {
+            game.reset();
+            selectedSquare = null;
+            validMoves = [];
+            gameOver = false;
+            isThinking = false;
+            renderBoard();
+            document.getElementById('moveCount').textContent = '0';
+            document.getElementById('turnDisplay').textContent = 'White';
+            document.getElementById('status').textContent = 'Game started';
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            game.reset();
+            selectedSquare = null;
+            validMoves = [];
+            gameOver = false;
+            isThinking = false;
+            renderBoard();
+            document.getElementById('moveCount').textContent = '0';
+            document.getElementById('turnDisplay').textContent = 'White';
+            document.getElementById('status').textContent = 'Board reset';
+        });
+
+        document.getElementById('difficulty').addEventListener('change', e => {
+            difficulty = parseInt(e.target.value);
+            document.getElementById('diffDisplay').textContent = difficulty;
+        });
+
+        renderBoard();
+    </script>
+</body>
+</html>
